@@ -1,7 +1,10 @@
 package io.logz.benchmarks.elasticsearch.configuration;
 
-import com.google.common.base.Splitter;
-import com.google.common.io.Files;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigException;
+import com.typesafe.config.ConfigFactory;
+import com.typesafe.config.ConfigObject;
 import io.logz.benchmarks.elasticsearch.benchmark.BenchmarkPlan;
 import io.logz.benchmarks.elasticsearch.benchmark.BenchmarkStep;
 import io.logz.benchmarks.elasticsearch.controllers.BaseController;
@@ -13,11 +16,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.charset.Charset;
-import java.time.Duration;
-import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -27,54 +25,59 @@ public class ConfigurationParser {
 
     private final static Logger logger = LoggerFactory.getLogger(ConfigurationParser.class);
 
-    public static BenchmarkPlan parseConfiguration(String configurationFile) {
+    public static BenchmarkPlan parseConfiguration(String configurationFile) throws InvalidConfigurationException {
 
         try {
-            logger.info("Trying to parse configuration file {}", configurationFile);
+            Config config = ConfigFactory.parseFile(new File(configurationFile));
+            ConfigObject elasticsearchConfig = config.getObject("elasticsearch");
+            List<? extends ConfigObject> stepsConfig = config.getObjectList("steps");
 
-            BenchmarkPlan plan = new BenchmarkPlan();
-            Files.readLines(new File(configurationFile), Charset.forName("utf-8")).forEach(line -> {
+            ObjectMapper objectMapper = new ObjectMapper();
 
-                String[] configurationLine = line.split("=");
-                List<BaseController> controllers = new ArrayList<>();
+            // Parse elasticsearch configuration
+            ElasticsearchConfiguration esConfig = objectMapper.convertValue(elasticsearchConfig.unwrapped(), ElasticsearchConfiguration.class);
+            esConfig.validateConfig();
 
-                // Get all controllers for this step
-                Splitter.on(",").omitEmptyStrings().split(configurationLine[0]).forEach(controller ->
-                        controllers.add(resolveControllerByName(controller)));
+            // Build initial benchmark plan
+            BenchmarkPlan benchmarkPlan = new BenchmarkPlan(esConfig);
 
-                // Get the duration of the step
-                long duration = Duration.parse("PT" + configurationLine[1]).toMillis();
-                BenchmarkStep step = new BenchmarkStep(controllers, duration);
+            for (ConfigObject currConfigObject: stepsConfig) {
 
-                logger.info("Added to test plan: {}", step.toString());
-                plan.addStep(step);
-            });
+                Config currConfig = currConfigObject.toConfig();
 
-            logger.info("Parsed configuration file successfully, woohoo!");
-            return plan;
+                long duration = currConfig.getDuration("duration").toMillis();
+                BenchmarkStep step = new BenchmarkStep(duration);
 
-        } catch (IOException e) {
-            throw new RuntimeException("Could not read configuration file " + configurationFile + ", nothing to do.");
-        } catch (IndexOutOfBoundsException e) {
-            throw new RuntimeException("Your configuration is invalid! Please refer to the README");
-        } catch (DateTimeParseException e) {
-            throw new RuntimeException("Could not parse the duration of at least one step! this should be in ISO-8601 standard, without the 'PT' prefix", e);
-        }
-    }
+                if (currConfig.hasPath("indexing")) {
+                    IndexingConfiguration indexingConfig = objectMapper.convertValue(currConfig.getObject("indexing").unwrapped(), IndexingConfiguration.class);
+                    indexingConfig.validateConfig();
+                    step.addController(new IndexingController(indexingConfig, benchmarkPlan.getEsController()));
+                }
 
-    private static BaseController resolveControllerByName(String controllerName) {
+                if (currConfig.hasPath("search")) {
+                    SearchConfiguration searchConfig = objectMapper.convertValue(currConfig.getObject("search").unwrapped(), SearchConfiguration.class);
+                    searchConfig.validateConfig();
+                    step.addController(new SearchController(searchConfig, benchmarkPlan.getEsController()));
+                }
 
-        switch (controllerName.toUpperCase()) {
-            case "INDEX":
-                return new IndexingController();
-            case "SEARCH":
-                return new SearchController();
-            case "OPTIMIZE":
-                return new OptimizeController();
-            case "NOOP":
-                return new NoopController();
-            default:
-                throw new RuntimeException("Unknown test step " + controllerName);
+                if (currConfig.hasPath("optimize")) {
+                    OptimizeConfiguration optimizeConfig = objectMapper.convertValue(currConfig.getObject("optimize").unwrapped(), OptimizeConfiguration.class);
+                    optimizeConfig.validateConfig();
+                    step.addController(new OptimizeController(optimizeConfig, benchmarkPlan.getEsController()));
+                }
+
+                if (currConfig.hasPath("noop")) {
+                    step.addController(new NoopController());
+                }
+
+                // Adding the final step
+                benchmarkPlan.addStep(step);
+            }
+
+            return benchmarkPlan;
+
+        } catch (ConfigException e) {
+            throw new RuntimeException("Could not parse configuration file!", e);
         }
     }
 }

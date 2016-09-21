@@ -5,7 +5,7 @@
         </encoder>
     </appender>
 
-    <logger name="io.searchbox.client" level="WARN"/>
+    <logger name="io.searchbox" level="WARN"/>
 
     <root level="DEBUG">
         <appender-ref ref="STDOUT" />

@@ -1,6 +1,8 @@
 package io.logz.benchmarks.elasticsearch.benchmark;
 
+import io.logz.benchmarks.elasticsearch.configuration.ElasticsearchConfiguration;
 import io.logz.benchmarks.elasticsearch.elasticsearch.ElasticsearchController;
+import io.logz.benchmarks.elasticsearch.metrics.GeneralMbean;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -11,16 +13,27 @@ import java.util.List;
 public class BenchmarkPlan {
 
     private final List<BenchmarkStep> benchmarkSteps;
+    private final ElasticsearchController esController;
+    private final GeneralMbean generalMbean;
 
-    public BenchmarkPlan() {
+    public BenchmarkPlan(ElasticsearchConfiguration esConfig) {
         benchmarkSteps = new LinkedList<>();
+        esController = new ElasticsearchController(esConfig);
+        generalMbean = GeneralMbean.getInstance();
     }
 
     public void addStep(BenchmarkStep step) {
         benchmarkSteps.add(step);
     }
 
-    public void execute(int indexingThreadCount, int searchThreadCount, ElasticsearchController esController) {
-        benchmarkSteps.forEach(step -> step.executeStep(indexingThreadCount, searchThreadCount, esController));
+    public void execute() {
+        benchmarkSteps.forEach(benchmarkStep -> {
+            benchmarkStep.executeStep();
+            generalMbean.incrementStep();
+        });
+    }
+
+    public ElasticsearchController getEsController() {
+        return esController;
     }
 }

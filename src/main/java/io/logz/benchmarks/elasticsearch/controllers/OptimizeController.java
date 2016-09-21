@@ -1,5 +1,6 @@
 package io.logz.benchmarks.elasticsearch.controllers;
 
+import io.logz.benchmarks.elasticsearch.configuration.OptimizeConfiguration;
 import io.logz.benchmarks.elasticsearch.elasticsearch.ElasticsearchController;
 
 /**
@@ -7,13 +8,22 @@ import io.logz.benchmarks.elasticsearch.elasticsearch.ElasticsearchController;
  */
 public class OptimizeController implements BaseController {
 
-    @Override
-    public String getControllerName() {
-        return null;
+    private final OptimizeConfiguration configuration;
+    private final ElasticsearchController esController;
+
+    public OptimizeController(OptimizeConfiguration configuration, ElasticsearchController esController) {
+
+        this.configuration = configuration;
+        this.esController = esController;
     }
 
     @Override
-    public void run(int numberOfThreads, ElasticsearchController esController) {
+    public String getControllerName() {
+        return "Optimize";
+    }
+
+    @Override
+    public void run() {
 
     }
 

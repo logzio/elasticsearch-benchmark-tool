@@ -8,7 +8,7 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * Created by roiravhon on 9/20/16.
  */
-@JMXBean(description = "Indexing JMX metrics")
+@JMXBean(description = "Search JMX metrics")
 public class SearchMbean {
 
     private static SearchMbean instance;

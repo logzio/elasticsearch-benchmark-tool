@@ -1,5 +1,7 @@
 package io.logz.benchmarks.elasticsearch.controllers;
 
+import io.logz.benchmarks.elasticsearch.configuration.ElasticsearchConfiguration;
+import io.logz.benchmarks.elasticsearch.configuration.IndexingConfiguration;
 import io.logz.benchmarks.elasticsearch.elasticsearch.ElasticsearchController;
 import io.logz.benchmarks.elasticsearch.metrics.IndexingMbean;
 
@@ -9,21 +11,25 @@ import io.logz.benchmarks.elasticsearch.metrics.IndexingMbean;
 public class IndexingController implements BaseController {
 
     IndexingMbean indexingMbean;
+    IndexingConfiguration configuration;
+    ElasticsearchController esController;
 
-    public IndexingController() {
+    public IndexingController(IndexingConfiguration configuration, ElasticsearchController esController) {
 
+        this.configuration = configuration;
+        this.esController = esController;
         indexingMbean = IndexingMbean.getInstance();
     }
 
     @Override
     public String getControllerName() {
-        return null;
+        return "Indexing";
     }
 
     @Override
-    public void run(int numberOfThreads, ElasticsearchController esController) {
+    public void run() {
 
-        
+
     }
 
     @Override
