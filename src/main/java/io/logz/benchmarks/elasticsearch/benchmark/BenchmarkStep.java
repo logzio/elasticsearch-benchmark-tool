@@ -3,7 +3,6 @@ package io.logz.benchmarks.elasticsearch.benchmark;
 import io.logz.benchmarks.elasticsearch.controllers.BaseController;
 import io.logz.benchmarks.elasticsearch.controllers.IndexingController;
 import io.logz.benchmarks.elasticsearch.controllers.SearchController;
-import io.logz.benchmarks.elasticsearch.elasticsearch.ElasticsearchController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,7 +14,7 @@ import java.util.List;
  */
 public class BenchmarkStep {
 
-    private final static Logger logger = LoggerFactory.getLogger(BenchmarkStep.class);
+    private static final Logger logger = LoggerFactory.getLogger(BenchmarkStep.class);
     private final List<BaseController> controllers;
     private final long durationMillis;
 
@@ -29,8 +28,6 @@ public class BenchmarkStep {
     }
 
     public void executeStep() {
-
-        //Executors.newFixedThreadPool(5);
 
         logger.info("Starting to execute step: " + toString());
         controllers.forEach(controller -> {
@@ -55,9 +52,14 @@ public class BenchmarkStep {
             logger.error("Got interrupted while running! gracefully shutting down.");
 
         } finally {
-            logger.info("Stopping step: " + toString());
+            logger.info("Stopping step: {}", toString());
             controllers.forEach(BaseController::stop);
         }
+    }
+
+    public void abortStep() {
+        logger.info("Aborting step: {}", toString());
+        controllers.forEach(BaseController::stop);
     }
 
     @Override

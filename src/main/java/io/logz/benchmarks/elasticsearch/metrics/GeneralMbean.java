@@ -26,6 +26,7 @@ public class GeneralMbean {
         currStep = new AtomicInteger(1);
     }
 
+    @SuppressWarnings("unused")
     @JMXBeanAttribute(name = "currStep", description = "The current step running")
     public long getCurrStep() {
         return currStep.get();

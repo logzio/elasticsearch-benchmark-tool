@@ -2,7 +2,7 @@ package io.logz.benchmarks.elasticsearch;
 import com.udojava.jmx.wrapper.JMXBeanWrapper;
 import io.logz.benchmarks.elasticsearch.benchmark.BenchmarkPlan;
 import io.logz.benchmarks.elasticsearch.configuration.ConfigurationParser;
-import io.logz.benchmarks.elasticsearch.configuration.InvalidConfigurationException;
+import io.logz.benchmarks.elasticsearch.exceptions.InvalidConfigurationException;
 import io.logz.benchmarks.elasticsearch.metrics.GeneralMbean;
 import io.logz.benchmarks.elasticsearch.metrics.IndexingMbean;
 import io.logz.benchmarks.elasticsearch.metrics.SearchMbean;
@@ -30,12 +30,9 @@ import java.lang.management.ManagementFactory;
  */
 public class ElasticsearchBenchmarkToolMain {
 
-    private final static Logger logger = LoggerFactory.getLogger(ConfigurationParser.class);
-    private static final String DEFAULT_INDEXING_THREADS = "5";
-    private static final String DEFAULT_SEARCHING_THREADS = "5";
+    private static final Logger logger = LoggerFactory.getLogger(ElasticsearchBenchmarkToolMain.class);
 
     public static void main(String[] args) {
-
         try {
 
             CommandLine cmd = parseCliArguments(args);
@@ -44,13 +41,13 @@ public class ElasticsearchBenchmarkToolMain {
             registerMbeans();
             BenchmarkPlan plan = ConfigurationParser.parseConfiguration(configFile);
 
-            try {
-                plan.getEsController().createIndex();
-                plan.execute();
+            // Make sure we cleanup nicely, no matter what
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                plan.abortPlan();
+                plan.cleanupPlan();
+            }));
 
-            } finally {
-                plan.getEsController().deleteIndex();
-            }
+            plan.execute();
         }
         catch (RuntimeException e) {
             logger.error(e.getMessage(), e);
@@ -63,8 +60,11 @@ public class ElasticsearchBenchmarkToolMain {
         }
     }
 
-    private static CommandLine parseCliArguments(String[] args) {
+    private static void cleanup(BenchmarkPlan plan) {
+        plan.getEsController().deleteIndex();
+    }
 
+    private static CommandLine parseCliArguments(String[] args) {
         Options options = new Options();
         logger.info("Parsing CLI arguments");
 
@@ -87,7 +87,6 @@ public class ElasticsearchBenchmarkToolMain {
     }
 
     private static void registerMbeans() {
-
         try {
             MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
 

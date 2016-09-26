@@ -7,11 +7,11 @@ import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigObject;
 import io.logz.benchmarks.elasticsearch.benchmark.BenchmarkPlan;
 import io.logz.benchmarks.elasticsearch.benchmark.BenchmarkStep;
-import io.logz.benchmarks.elasticsearch.controllers.BaseController;
 import io.logz.benchmarks.elasticsearch.controllers.IndexingController;
 import io.logz.benchmarks.elasticsearch.controllers.NoopController;
 import io.logz.benchmarks.elasticsearch.controllers.OptimizeController;
 import io.logz.benchmarks.elasticsearch.controllers.SearchController;
+import io.logz.benchmarks.elasticsearch.exceptions.InvalidConfigurationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,10 +23,9 @@ import java.util.List;
  */
 public class ConfigurationParser {
 
-    private final static Logger logger = LoggerFactory.getLogger(ConfigurationParser.class);
+    private static final Logger logger = LoggerFactory.getLogger(ConfigurationParser.class);
 
     public static BenchmarkPlan parseConfiguration(String configurationFile) throws InvalidConfigurationException {
-
         try {
             Config config = ConfigFactory.parseFile(new File(configurationFile));
             ConfigObject elasticsearchConfig = config.getObject("elasticsearch");

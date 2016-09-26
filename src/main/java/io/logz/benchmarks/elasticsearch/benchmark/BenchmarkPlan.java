@@ -15,6 +15,9 @@ public class BenchmarkPlan {
     private final List<BenchmarkStep> benchmarkSteps;
     private final ElasticsearchController esController;
     private final GeneralMbean generalMbean;
+    private BenchmarkStep currentStep;
+    private boolean aborting = false;
+    private boolean done = false;
 
     public BenchmarkPlan(ElasticsearchConfiguration esConfig) {
         benchmarkSteps = new LinkedList<>();
@@ -27,10 +30,32 @@ public class BenchmarkPlan {
     }
 
     public void execute() {
+        prepareForExecution();
         benchmarkSteps.forEach(benchmarkStep -> {
-            benchmarkStep.executeStep();
-            generalMbean.incrementStep();
+            if (!aborting) {
+                currentStep = benchmarkStep;
+                benchmarkStep.executeStep();
+                generalMbean.incrementStep();
+            }
         });
+
+        done = true;
+    }
+
+    private void prepareForExecution() {
+        esController.createIndex();
+    }
+
+    public void cleanupPlan() {
+        esController.deleteIndex();
+    }
+
+    public void abortPlan() {
+        if (!done) {
+            aborting = true;
+            if (currentStep != null)
+                currentStep.abortStep();
+        }
     }
 
     public ElasticsearchController getEsController() {

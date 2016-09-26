@@ -1,4 +1,4 @@
-package io.logz.benchmarks.elasticsearch.configuration;
+package io.logz.benchmarks.elasticsearch.exceptions;
 
 /**
  * Created by roiravhon on 9/21/16.
