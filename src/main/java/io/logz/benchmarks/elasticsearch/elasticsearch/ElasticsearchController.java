@@ -4,13 +4,19 @@ import com.google.common.io.Files;
 import com.google.common.io.Resources;
 import io.logz.benchmarks.elasticsearch.configuration.ElasticsearchConfiguration;
 import io.logz.benchmarks.elasticsearch.exceptions.CouldNotCompleteBulkOperationException;
+import io.logz.benchmarks.elasticsearch.exceptions.CouldNotExecuteSearchException;
+import io.logz.benchmarks.elasticsearch.exceptions.CouldNotOptimizeException;
 import io.searchbox.client.JestClient;
 import io.searchbox.client.JestClientFactory;
+import io.searchbox.client.JestResult;
 import io.searchbox.client.config.HttpClientConfig;
 import io.searchbox.core.Bulk;
 import io.searchbox.core.BulkResult;
+import io.searchbox.core.Search;
+import io.searchbox.core.SearchResult;
 import io.searchbox.indices.CreateIndex;
 import io.searchbox.indices.DeleteIndex;
+import io.searchbox.indices.Optimize;
 import io.searchbox.indices.mapping.PutMapping;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.index.mapper.core.DateFieldMapper;
@@ -27,6 +33,8 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.IntStream;
 
 /**
@@ -49,14 +57,19 @@ public class ElasticsearchController {
     private final ElasticsearchConfiguration esConfig;
     private final ArrayList<String> randomFieldsList;
     private final ArrayList<String> rawDocumentsList;
+    private final ArrayList<String> searchesList;
     private final JestClient client;
     private final String indexName;
+    private final AtomicInteger lastSelectedDocument;
+    private final AtomicInteger lastSelectedSearch;
 
     private boolean indexCreated = false;
-    private int lastSelectedDocument = 0;
 
     public ElasticsearchController(ElasticsearchConfiguration esConfig) {
         this.esConfig = esConfig;
+        lastSelectedDocument = new AtomicInteger(0);
+        lastSelectedSearch = new AtomicInteger(0);
+
         indexName = getRandomString(INDEX_LENGTH);
 
         logger.info("Random test index name set to: {}", indexName);
@@ -64,6 +77,7 @@ public class ElasticsearchController {
         client = initializeJestClient(esConfig);
         randomFieldsList = generateRandomFieldList();
         rawDocumentsList = getResourceDirectoryContent(TEMPLATE_DOCUMENTS_RESOURCE_FOLDER);
+        searchesList = getResourceDirectoryContent(TEMPLATE_SEARCHES_RESOURCE_FOLDER);
     }
 
     public void createIndex() {
@@ -125,9 +139,37 @@ public class ElasticsearchController {
         }
     }
 
+    // Returns the number of documents found
+    public int executeSearch(Search search) throws CouldNotExecuteSearchException {
+
+        try {
+            SearchResult result = client.execute(search);
+            return result.getTotal();
+        } catch (IOException e) {
+            throw new CouldNotExecuteSearchException();
+        }
+    }
+
+    public void executeOptimize(Optimize optimize) throws CouldNotOptimizeException {
+        try {
+            JestResult result = client.execute(optimize);
+            if (!result.isSucceeded())
+                throw new CouldNotOptimizeException(result.getErrorMessage());
+
+        } catch (IOException e) {
+            throw new CouldNotOptimizeException();
+        }
+    }
+
+    public String getSearch() {
+        String currSearch = searchesList.get(lastSelectedSearch.get() % searchesList.size());
+        lastSelectedSearch.incrementAndGet();
+        return currSearch;
+    }
+
     private String getDocument() {
 
-        String currDocument = rawDocumentsList.get(lastSelectedDocument % rawDocumentsList.size());
+        String currDocument = rawDocumentsList.get(lastSelectedDocument.get() % rawDocumentsList.size());
         currDocument = currDocument.replace(TIMESTAMP_PLACEHOLDER, String.valueOf(System.currentTimeMillis()));
 
         // Replacing all marks with values
@@ -141,7 +183,7 @@ public class ElasticsearchController {
                 break;
         }
 
-        lastSelectedDocument++;
+        lastSelectedDocument.incrementAndGet();
         return currDocument;
     }
 

@@ -1,0 +1,6 @@
+{
+  "@timestamp": TIMESTAMP,
+  "bookId": RANDINT,
+  "orderId": RANDINT,
+  "bookName": "RANDSTR"
+}

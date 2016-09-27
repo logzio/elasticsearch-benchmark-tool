@@ -1,15 +1,19 @@
 package io.logz.benchmarks.elasticsearch.controllers;
 
+import com.google.common.base.Stopwatch;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.logz.benchmarks.elasticsearch.configuration.SearchConfiguration;
 import io.logz.benchmarks.elasticsearch.elasticsearch.ElasticsearchController;
+import io.logz.benchmarks.elasticsearch.exceptions.CouldNotExecuteSearchException;
+import io.logz.benchmarks.elasticsearch.metrics.SearchMbean;
+import io.searchbox.core.Search;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadFactory;
-import java.util.stream.IntStream;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by roiravhon on 9/19/16.
@@ -20,16 +24,19 @@ public class SearchController implements BaseController {
 
     private final SearchConfiguration configuration;
     private final ElasticsearchController esController;
-    private final ExecutorService threadPool;
+    private final SearchMbean searchMbean;
+    private final ScheduledExecutorService executorService;
 
     public SearchController(SearchConfiguration configuration, ElasticsearchController esController) {
 
         this.configuration = configuration;
         this.esController = esController;
 
-        // Creating the thread pool
+        searchMbean = SearchMbean.getInstance();
+
+        // Creating the executor service
         ThreadFactory namedThreadFactory = new ThreadFactoryBuilder().setNameFormat("search-thread-%d").build();
-        threadPool = Executors.newFixedThreadPool(5, namedThreadFactory);
+        executorService = new ScheduledThreadPoolExecutor(configuration.getNumberOfThreads(), namedThreadFactory);
     }
 
     @Override
@@ -40,36 +47,42 @@ public class SearchController implements BaseController {
     @Override
     public void run() {
 
-        // Creating indexing threads
-        IntStream.range(0, configuration.getNumberOfThreads())
-                .forEach((threadNumber) -> threadPool.submit(() -> startSearching(threadNumber)));
+        double searchRateMillis = (60 / (double)configuration.getSearchesPerMinute()) * 1000;
+        executorService.scheduleAtFixedRate(this::startSearching, 0, (int)searchRateMillis, TimeUnit.MILLISECONDS);
     }
 
     @Override
     public void stop() {
 
-        threadPool.shutdownNow();
+        executorService.shutdownNow();
     }
 
-    private void startSearching(int threadNumber) {
+    private void startSearching() {
 
-        logger.debug("Starting search thread #{}", threadNumber);
+        if (Thread.interrupted())
+            return;
 
-        while (true) {
-            if (Thread.interrupted()) {
-                logger.debug("Got interrupt, stopping search thread #{}", threadNumber);
-                return;
-            }
+        String currSearch = esController.getSearch();
 
-            // Round robin on searches
+        Search search = new Search.Builder(currSearch)
+                .addIndex(esController.getIndexName())
+                .addType(esController.getDefaultType())
+                .build();
 
-            // Start stopwatch
+        Stopwatch stopwatch = Stopwatch.createStarted();
 
-            // Execute search
+        try {
+            int docCount = esController.executeSearch(search);
+            stopwatch.stop();
 
-            // Stop stopwatch
+            searchMbean.incrementSuccessfulSearches();
+            searchMbean.incrementNumberOfFetchedDocuments(docCount);
+            searchMbean.incrementTotalSearchTimeMs(stopwatch.elapsed(TimeUnit.MILLISECONDS));
 
-            // Update metrics
+        } catch (CouldNotExecuteSearchException e) {
+            stopwatch.stop();
+            logger.debug("Could not execute search", e);
+            searchMbean.incrementNumberOfFailedSearches();
         }
     }
 }

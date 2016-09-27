@@ -1,0 +1,58 @@
+{
+  "size": 0,
+  "query": {
+    "filtered": {
+      "query": {
+        "query_string": {
+          "query": "*",
+          "analyze_wildcard": true
+        }
+      },
+      "filter": {
+        "bool": {
+          "must": [{
+            "range": {
+              "@timestamp": {
+                "gte": "now-30m",
+                "lte": "now",
+                "format": "epoch_millis"
+              }
+            }
+          }],
+          "must_not": []
+        }
+      }
+    }
+  },
+  "aggs": {
+    "2": {
+      "date_histogram": {
+        "field": "@timestamp",
+        "interval": "1m",
+        "min_doc_count": 1,
+        "extended_bounds": {
+          "min": "now-30m",
+          "max": "now"
+        }
+      },
+      "aggs": {
+        "3": {
+          "terms": {
+            "field": "clientId",
+            "size": 100,
+            "order": {
+              "1": "desc"
+            }
+          },
+          "aggs": {
+            "1": {
+              "cardinality": {
+                "field": "clientAge"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
