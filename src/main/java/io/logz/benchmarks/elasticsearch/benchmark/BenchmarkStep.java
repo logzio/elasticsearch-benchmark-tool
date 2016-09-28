@@ -30,18 +30,7 @@ public class BenchmarkStep {
     public void executeStep() {
 
         logger.info("Starting to execute step: " + toString());
-        controllers.forEach(controller -> {
-
-            if (controller instanceof IndexingController) {
-                controller.run();
-
-            } else if (controller instanceof SearchController) {
-                controller.run();
-
-            } else {
-                controller.run();
-            }
-        });
+        controllers.forEach(BaseController::run);
 
         try {
             logger.info("Step started. Waiting for {} millis.", durationMillis);
@@ -66,7 +55,7 @@ public class BenchmarkStep {
     public String toString() {
 
         StringBuilder allControllersNames = new StringBuilder();
-        controllers.forEach(controller -> allControllersNames.append(controller.getControllerName() + ", "));
+        controllers.forEach(controller -> allControllersNames.append(controller.getControllerName()).append(", "));
 
         return "Controllers: " + allControllersNames.toString() + "for: " + durationMillis + " ms";
     }

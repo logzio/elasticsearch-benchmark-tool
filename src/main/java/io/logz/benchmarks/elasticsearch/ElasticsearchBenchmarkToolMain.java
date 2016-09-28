@@ -62,10 +62,6 @@ public class ElasticsearchBenchmarkToolMain {
         }
     }
 
-    private static void cleanup(BenchmarkPlan plan) {
-        plan.getEsController().deleteIndex();
-    }
-
     private static CommandLine parseCliArguments(String[] args) {
         Options options = new Options();
         logger.info("Parsing CLI arguments");
