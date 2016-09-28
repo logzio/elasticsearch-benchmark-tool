@@ -48,6 +48,8 @@ public class ElasticsearchBenchmarkToolMain {
             }));
 
             plan.execute();
+            plan.printStats();
+            System.exit(0);
         }
         catch (RuntimeException e) {
             logger.error(e.getMessage(), e);

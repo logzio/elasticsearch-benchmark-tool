@@ -1,6 +1,5 @@
 package io.logz.benchmarks.elasticsearch.elasticsearch;
 
-import com.google.common.io.Files;
 import com.google.common.io.Resources;
 import io.logz.benchmarks.elasticsearch.configuration.ElasticsearchConfiguration;
 import io.logz.benchmarks.elasticsearch.exceptions.CouldNotCompleteBulkOperationException;
@@ -19,22 +18,23 @@ import io.searchbox.indices.DeleteIndex;
 import io.searchbox.indices.Optimize;
 import io.searchbox.indices.mapping.PutMapping;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.index.mapper.core.DateFieldMapper;
-import org.elasticsearch.index.mapper.core.StringFieldMapper;
-import org.elasticsearch.index.mapper.object.RootObjectMapper;
+import org.reflections.Reflections;
+import org.reflections.scanners.ResourcesScanner;
+import org.reflections.util.ClasspathHelper;
+import org.reflections.util.ConfigurationBuilder;
+import org.reflections.util.FilterBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 
 /**
@@ -47,8 +47,8 @@ public class ElasticsearchController {
     private static final int FIELD_CARDINALITY = 100;
     private static final int MAX_CHARS_IN_FIELD = 10;
     private static final int MIN_CHARS_IN_FIELD = 5;
-    private static final String TEMPLATE_DOCUMENTS_RESOURCE_FOLDER = "templates/documents";
-    private static final String TEMPLATE_SEARCHES_RESOURCE_FOLDER = "templates/searches";
+    private static final String TEMPLATE_DOCUMENTS_RESOURCE_PATTERN = ".*templates/documents.*";
+    private static final String TEMPLATE_SEARCHES_RESOURCE_PATTERN = ".*templates/searches.*";
     private static final String TIMESTAMP_PLACEHOLDER = "TIMESTAMP";
     private static final String RANDOM_STR_PLACEHOLDER = "RANDSTR";
     private static final String RANDOM_INT_PLACEHOLDER = "RANDINT";
@@ -76,8 +76,8 @@ public class ElasticsearchController {
 
         client = initializeJestClient(esConfig);
         randomFieldsList = generateRandomFieldList();
-        rawDocumentsList = getResourceDirectoryContent(TEMPLATE_DOCUMENTS_RESOURCE_FOLDER);
-        searchesList = getResourceDirectoryContent(TEMPLATE_SEARCHES_RESOURCE_FOLDER);
+        rawDocumentsList = getResourceDirectoryContent(TEMPLATE_DOCUMENTS_RESOURCE_PATTERN);
+        searchesList = getResourceDirectoryContent(TEMPLATE_SEARCHES_RESOURCE_PATTERN);
     }
 
     public void createIndex() {
@@ -229,26 +229,29 @@ public class ElasticsearchController {
         return tempRandomFieldList;
     }
 
-    private ArrayList<String> getResourceDirectoryContent(String directoryName) {
-        try {
-            ArrayList<String> tempFilesContentList = new ArrayList<>();
+    private ArrayList<String> getResourceDirectoryContent(String resourcePattern) {
+        ArrayList<String> tempFilesContentList = new ArrayList<>();
 
-            URL url = Resources.getResource(directoryName + "/");
+        Reflections reflections = new Reflections(new ConfigurationBuilder()
+                                                        .setUrls(ClasspathHelper.forPackage("io.logz"))
+                                                        .setScanners(new ResourcesScanner())
+                                                        .filterInputsBy(new FilterBuilder().include(resourcePattern)));
+        Set<String> properties = reflections.getResources(Pattern.compile(".*\\.json"));
 
-            File directory = new File(url.toURI());
+        properties.forEach((resourceName) -> {
 
-            if (!directory.isDirectory())
-                throw new RuntimeException(directoryName + " is not a directory! cant read files in it");
+            URL resourceUrl = Resources.getResource(resourceName);
+            try {
+                tempFilesContentList.add(Resources.toString(resourceUrl, Charset.forName("utf-8")).replace("\n", ""));
 
-            for (File currFile : directory.listFiles()) {
-                tempFilesContentList.add(Files.toString(currFile, Charset.defaultCharset())
-                                        .replace("\n", "").replace("\r", ""));
+            } catch (IOException e) {
+                logger.info("Could not read file {}", resourceUrl.toString());
             }
+        });
 
-            return tempFilesContentList;
+        if (tempFilesContentList.isEmpty())
+            throw new RuntimeException("Did not find any files under "+ resourcePattern +"!");
 
-        } catch (URISyntaxException | IOException e) {
-            throw new RuntimeException("Could not read files in resources directory " + directoryName, e);
-        }
+        return tempFilesContentList;
     }
 }

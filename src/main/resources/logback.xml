@@ -6,6 +6,8 @@
     </appender>
 
     <logger name="io.searchbox" level="WARN"/>
+    <logger name="io.logz.jmx2graphite" level="WARN"/>
+    <logger name="org.reflections.Reflections" level="WARN"/>
 
     <root level="DEBUG">
         <appender-ref ref="STDOUT" />
