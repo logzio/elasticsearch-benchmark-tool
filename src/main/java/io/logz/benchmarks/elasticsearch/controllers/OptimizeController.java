@@ -33,7 +33,6 @@ public class OptimizeController implements BaseController {
         logger.debug("Starting to optimize!");
         Optimize optimize = new Optimize.Builder()
                                         .maxNumSegments(configuration.getNumberOfSegments())
-                                        .waitForMerge(false)
                                         .build();
 
         try {
