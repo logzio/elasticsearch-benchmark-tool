@@ -158,7 +158,7 @@ public class ElasticsearchController {
                 throw new CouldNotOptimizeException(result.getErrorMessage());
 
         } catch (IOException e) {
-            throw new CouldNotOptimizeException();
+            throw new CouldNotOptimizeException(e);
         }
     }
 
