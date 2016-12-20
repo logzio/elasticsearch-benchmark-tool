@@ -3,7 +3,7 @@ package io.logz.benchmarks.elasticsearch.controllers;
 import io.logz.benchmarks.elasticsearch.configuration.OptimizeConfiguration;
 import io.logz.benchmarks.elasticsearch.elasticsearch.ElasticsearchController;
 import io.logz.benchmarks.elasticsearch.exceptions.CouldNotOptimizeException;
-import io.searchbox.indices.Optimize;
+import io.searchbox.indices.ForceMerge;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,13 +30,12 @@ public class OptimizeController implements BaseController {
 
     @Override
     public void run() {
-        logger.debug("Starting to optimize!");
-        Optimize optimize = new Optimize.Builder()
-                                        .maxNumSegments(configuration.getNumberOfSegments())
-                                        .build();
-
+        logger.debug("Starting to optimize! (force merge)");
+        ForceMerge forceMerge = new ForceMerge.Builder()
+                .maxNumSegments(configuration.getNumberOfSegments())
+                .build();
         try {
-            esController.executeOptimize(optimize);
+            esController.executeForceMerge(forceMerge);
         } catch (CouldNotOptimizeException e) {
             logger.info("Could not optimize!", e);
         }

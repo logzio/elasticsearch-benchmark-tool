@@ -15,6 +15,7 @@ import io.searchbox.core.Search;
 import io.searchbox.core.SearchResult;
 import io.searchbox.indices.CreateIndex;
 import io.searchbox.indices.DeleteIndex;
+import io.searchbox.indices.ForceMerge;
 import io.searchbox.indices.Optimize;
 import io.searchbox.indices.mapping.PutMapping;
 import org.elasticsearch.common.settings.Settings;
@@ -150,9 +151,9 @@ public class ElasticsearchController {
         }
     }
 
-    public void executeOptimize(Optimize optimize) throws CouldNotOptimizeException {
+    public void executeForceMerge(ForceMerge forceMerge) throws CouldNotOptimizeException {
         try {
-            JestResult result = client.execute(optimize);
+            JestResult result = client.execute(forceMerge);
             if (!result.isSucceeded())
                 throw new CouldNotOptimizeException(result.getErrorMessage());
 
