@@ -48,7 +48,10 @@ public class SearchMbean {
     @SuppressWarnings("unused")
     @JMXBeanAttribute(name = "averageSearchTimeMs", description = "The average time each query tool, in MS")
     public long getAverageSearchTimeMs() {
-        return getTotalSuccessfulSearchesTimeMs() / getNumberOfSuccessfulSearches();
+        if (getNumberOfSuccessfulSearches() > 0) {
+            return getTotalSuccessfulSearchesTimeMs() / getNumberOfSuccessfulSearches();
+        }
+        return 0;
     }
 
     @SuppressWarnings("unused")
