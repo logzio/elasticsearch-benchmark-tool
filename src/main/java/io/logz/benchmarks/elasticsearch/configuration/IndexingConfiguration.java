@@ -7,7 +7,7 @@ import io.logz.benchmarks.elasticsearch.exceptions.InvalidConfigurationException
  */
 public class IndexingConfiguration implements BaseConfiguration{
 
-    private static final int MAX_NUMBER_OF_THREADS = 100;
+    private static final int MAX_NUMBER_OF_THREADS = 10000;
     private static final int MIN_NUMBER_OF_THREADS = 1;
     private int numberOfThreads = 5;
     private int bulkSize = 1000;

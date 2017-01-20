@@ -8,9 +8,9 @@ import io.logz.benchmarks.elasticsearch.exceptions.InvalidConfigurationException
 public class SearchConfiguration implements BaseConfiguration {
 
     private static final int MIN_NUMBER_OF_THREADS = 1;
-    private static final int MAX_NUMBER_OF_THREADS = 100;
+    private static final int MAX_NUMBER_OF_THREADS = 10000;
     private static final int MIN_SEARCHES_PER_MINUTE = 1;
-    private static final int MAX_SEARCHES_PER_MINUTE = 600;
+    private static final int MAX_SEARCHES_PER_MINUTE = 60000;
     private int numberOfThreads = 5;
     private int searchesPerMinute = 60;
 
