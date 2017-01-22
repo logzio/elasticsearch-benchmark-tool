@@ -57,7 +57,8 @@ public class SearchController implements BaseController {
         executorService.shutdownNow();
     }
 
-    private void startSearching() {
+    @SuppressWarnings("WeakerAccess")
+    public void startSearching() {
 
         if (Thread.interrupted())
             return;
