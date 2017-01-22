@@ -10,10 +10,13 @@ import io.searchbox.core.Search;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.IntStream;
 
 /**
  * Created by roiravhon on 9/19/16.
@@ -25,7 +28,7 @@ public class SearchController implements BaseController {
     private final SearchConfiguration configuration;
     private final ElasticsearchController esController;
     private final SearchMbean searchMbean;
-    private final ScheduledExecutorService executorService;
+    private final ExecutorService threadPool;
 
     public SearchController(SearchConfiguration configuration, ElasticsearchController esController) {
 
@@ -36,7 +39,7 @@ public class SearchController implements BaseController {
 
         // Creating the executor service
         ThreadFactory namedThreadFactory = new ThreadFactoryBuilder().setNameFormat("search-thread-%d").build();
-        executorService = new ScheduledThreadPoolExecutor(configuration.getNumberOfThreads(), namedThreadFactory);
+        threadPool = Executors.newFixedThreadPool(configuration.getNumberOfThreads(), namedThreadFactory);
     }
 
     @Override
@@ -47,43 +50,47 @@ public class SearchController implements BaseController {
     @Override
     public void run() {
 
-        double searchRateMillis = (60 / (double)configuration.getSearchesPerMinute()) * 1000;
-        executorService.scheduleAtFixedRate(this::startSearching, 0, (int)searchRateMillis, TimeUnit.MILLISECONDS);
+        IntStream.range(0, configuration.getNumberOfThreads())
+                .forEach((threadNumber) -> threadPool.submit(() -> startSearching(threadNumber)));
     }
 
     @Override
     public void stop() {
 
-        executorService.shutdownNow();
+        threadPool.shutdownNow();
     }
 
     @SuppressWarnings("WeakerAccess")
-    public void startSearching() {
+    public void startSearching(int threadNumber) {
 
-        if (Thread.interrupted())
-            return;
+        logger.debug("Starting searching thread #{}", threadNumber);
 
-        String currSearch = esController.getSearch();
+        while (true) {
+            if (Thread.interrupted())
+                return;
 
-        Search search = new Search.Builder(currSearch)
-                .addIndex(esController.getIndexName())
-                .addType(esController.getDefaultType())
-                .build();
+            String currSearch = esController.getSearch();
 
-        Stopwatch stopwatch = Stopwatch.createStarted();
+            Search search = new Search.Builder(currSearch)
+                    .addIndex(esController.getIndexName())
+                    .addType(esController.getDefaultType())
+                    .build();
 
-        try {
-            int docCount = esController.executeSearch(search);
-            stopwatch.stop();
+            Stopwatch stopwatch = Stopwatch.createStarted();
 
-            searchMbean.incrementSuccessfulSearches();
-            searchMbean.incrementNumberOfFetchedDocuments(docCount);
-            searchMbean.incrementTotalSearchTimeMs(stopwatch.elapsed(TimeUnit.MILLISECONDS));
+            try {
+                int docCount = esController.executeSearch(search);
+                stopwatch.stop();
 
-        } catch (CouldNotExecuteSearchException e) {
-            stopwatch.stop();
-            logger.debug("Could not execute search", e);
-            searchMbean.incrementNumberOfFailedSearches();
+                searchMbean.incrementSuccessfulSearches();
+                searchMbean.incrementNumberOfFetchedDocuments(docCount);
+                searchMbean.incrementTotalSearchTimeMs(stopwatch.elapsed(TimeUnit.MILLISECONDS));
+
+            } catch (CouldNotExecuteSearchException e) {
+                stopwatch.stop();
+                logger.debug("Could not execute search", e);
+                searchMbean.incrementNumberOfFailedSearches();
+            }
         }
     }
 }

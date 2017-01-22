@@ -39,7 +39,7 @@ public class IndexingController implements BaseController {
 
         // Creating the thread pool
         ThreadFactory namedThreadFactory = new ThreadFactoryBuilder().setNameFormat("indexing-thread-%d").build();
-        threadPool = Executors.newFixedThreadPool(5, namedThreadFactory);
+        threadPool = Executors.newFixedThreadPool(configuration.getNumberOfThreads(), namedThreadFactory);
     }
 
     @Override
