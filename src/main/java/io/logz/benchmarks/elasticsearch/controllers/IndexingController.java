@@ -63,10 +63,10 @@ public class IndexingController implements BaseController {
 
     private void startIndexing(int threadNumber) {
 
-        try {
-            logger.debug("Starting indexing thread #{}", threadNumber);
+        while (true) {
+            try {
+                logger.debug("Starting indexing thread #{}", threadNumber);
 
-            while (true) {
                 if (Thread.interrupted()) {
                     logger.debug("Got interrupt, stopping indexing thread #{}", threadNumber);
                     return;
@@ -95,9 +95,10 @@ public class IndexingController implements BaseController {
                     // Assuming all documents failed..
                     indexingMbean.incrementFailedDocuements(configuration.getBulkSize());
                 }
+
+            } catch (Throwable throwable) {
+                logger.debug("Got unexpected exception while indexing!", throwable);
             }
-        } catch (Throwable throwable) {
-            logger.debug("Got unexpected exception while indexing!", throwable);
         }
     }
 }
