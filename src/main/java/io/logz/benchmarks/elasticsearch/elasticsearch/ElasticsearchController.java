@@ -146,7 +146,8 @@ public class ElasticsearchController {
         try {
             SearchResult result = client.execute(search);
 
-            logger.debug(result.toString());
+            logger.debug(result.getErrorMessage());
+            logger.debug(result.getJsonString());
 
             return result.getTotal();
         } catch (IOException e) {
