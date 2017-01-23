@@ -69,16 +69,17 @@ public class SearchController implements BaseController {
             if (Thread.interrupted())
                 return;
 
-            String currSearch = esController.getSearch();
-
-            Search search = new Search.Builder(currSearch)
-                    .addIndex(esController.getIndexName())
-                    .addType(esController.getDefaultType())
-                    .build();
-
-            Stopwatch stopwatch = Stopwatch.createStarted();
+            Stopwatch stopwatch = Stopwatch.createUnstarted();
 
             try {
+                String currSearch = esController.getSearch();
+
+                Search search = new Search.Builder(currSearch)
+                        .addIndex(esController.getIndexName())
+                        .addType(esController.getDefaultType())
+                        .build();
+
+                stopwatch.start();
                 int docCount = esController.executeSearch(search);
                 stopwatch.stop();
 
