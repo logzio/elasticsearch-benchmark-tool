@@ -63,35 +63,39 @@ public class SearchController implements BaseController {
     @SuppressWarnings("WeakerAccess")
     public void startSearching(int threadNumber) {
 
-        logger.debug("Starting searching thread #{}", threadNumber);
+        try {
+            logger.debug("Starting searching thread #{}", threadNumber);
 
-        while (true) {
-            if (Thread.interrupted())
-                return;
+            while (true) {
+                if (Thread.interrupted())
+                    return;
 
-            Stopwatch stopwatch = Stopwatch.createUnstarted();
+                Stopwatch stopwatch = Stopwatch.createUnstarted();
 
-            try {
-                String currSearch = esController.getSearch();
+                try {
+                    String currSearch = esController.getSearch();
 
-                Search search = new Search.Builder(currSearch)
-                        .addIndex(esController.getIndexName())
-                        .addType(esController.getDefaultType())
-                        .build();
+                    Search search = new Search.Builder(currSearch)
+                            .addIndex(esController.getIndexName())
+                            .addType(esController.getDefaultType())
+                            .build();
 
-                stopwatch.start();
-                int docCount = esController.executeSearch(search);
-                stopwatch.stop();
+                    stopwatch.start();
+                    int docCount = esController.executeSearch(search);
+                    stopwatch.stop();
 
-                searchMbean.incrementSuccessfulSearches();
-                searchMbean.incrementNumberOfFetchedDocuments(docCount);
-                searchMbean.incrementTotalSearchTimeMs(stopwatch.elapsed(TimeUnit.MILLISECONDS));
+                    searchMbean.incrementSuccessfulSearches();
+                    searchMbean.incrementNumberOfFetchedDocuments(docCount);
+                    searchMbean.incrementTotalSearchTimeMs(stopwatch.elapsed(TimeUnit.MILLISECONDS));
 
-            } catch (CouldNotExecuteSearchException e) {
-                stopwatch.stop();
-                logger.debug("Could not execute search", e);
-                searchMbean.incrementNumberOfFailedSearches();
+                } catch (CouldNotExecuteSearchException e) {
+                    stopwatch.stop();
+                    logger.debug("Could not execute search", e);
+                    searchMbean.incrementNumberOfFailedSearches();
+                }
             }
+        } catch (Throwable throwable) {
+            logger.debug("Got unexpected exception while searching!", throwable);
         }
     }
 }

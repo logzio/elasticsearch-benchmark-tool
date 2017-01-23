@@ -63,37 +63,41 @@ public class IndexingController implements BaseController {
 
     private void startIndexing(int threadNumber) {
 
-        logger.debug("Starting indexing thread #{}", threadNumber);
+        try {
+            logger.debug("Starting indexing thread #{}", threadNumber);
 
-        while (true) {
-            if (Thread.interrupted()) {
-                logger.debug("Got interrupt, stopping indexing thread #{}", threadNumber);
-                return;
+            while (true) {
+                if (Thread.interrupted()) {
+                    logger.debug("Got interrupt, stopping indexing thread #{}", threadNumber);
+                    return;
+                }
+
+                // Create bulk
+                Bulk currBulk = new Bulk.Builder()
+                        .defaultIndex(esController.getIndexName())
+                        .defaultType(esController.getDefaultType())
+                        .addAction(esController.getMultipleDocuments(configuration.getBulkSize())
+                                .stream()
+                                .map((doc) -> new Index.Builder(doc).build())
+                                .collect(Collectors.toList()))
+                        .build();
+
+                try {
+                    // Lets index the bulk!
+                    int numberOfFailedDocuments = esController.executeBulk(currBulk);
+
+                    // Update metrics
+                    indexingMbean.incrementSuccessfulDocuments(configuration.getBulkSize() - numberOfFailedDocuments);
+                    indexingMbean.incrementFailedDocuements(numberOfFailedDocuments);
+
+                } catch (CouldNotCompleteBulkOperationException e) {
+
+                    // Assuming all documents failed..
+                    indexingMbean.incrementFailedDocuements(configuration.getBulkSize());
+                }
             }
-
-            // Create bulk
-            Bulk currBulk = new Bulk.Builder()
-                    .defaultIndex(esController.getIndexName())
-                    .defaultType(esController.getDefaultType())
-                    .addAction(esController.getMultipleDocuments(configuration.getBulkSize())
-                                                                               .stream()
-                                                                               .map((doc) -> new Index.Builder(doc).build())
-                                                                               .collect(Collectors.toList()))
-                    .build();
-
-            try {
-                // Lets index the bulk!
-                int numberOfFailedDocuments = esController.executeBulk(currBulk);
-
-                // Update metrics
-                indexingMbean.incrementSuccessfulDocuments(configuration.getBulkSize() - numberOfFailedDocuments);
-                indexingMbean.incrementFailedDocuements(numberOfFailedDocuments);
-
-            } catch (CouldNotCompleteBulkOperationException e) {
-
-                // Assuming all documents failed..
-                indexingMbean.incrementFailedDocuements(configuration.getBulkSize());
-            }
+        } catch (Throwable throwable) {
+            logger.debug("Got unexpected exception while indexing!", throwable);
         }
     }
 }
