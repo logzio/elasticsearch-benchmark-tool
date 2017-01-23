@@ -63,10 +63,10 @@ public class SearchController implements BaseController {
     @SuppressWarnings("WeakerAccess")
     public void startSearching(int threadNumber) {
 
-        try {
-            logger.debug("Starting searching thread #{}", threadNumber);
+        while (true) {
+            try {
+                logger.debug("Starting searching thread #{}", threadNumber);
 
-            while (true) {
                 if (Thread.interrupted())
                     return;
 
@@ -93,9 +93,10 @@ public class SearchController implements BaseController {
                     logger.debug("Could not execute search", e);
                     searchMbean.incrementNumberOfFailedSearches();
                 }
+
+            } catch (Throwable throwable){
+                logger.debug("Got unexpected exception while searching!", throwable);
             }
-        } catch (Throwable throwable) {
-            logger.debug("Got unexpected exception while searching!", throwable);
         }
     }
 }

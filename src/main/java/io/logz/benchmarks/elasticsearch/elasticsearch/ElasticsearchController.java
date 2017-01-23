@@ -145,6 +145,12 @@ public class ElasticsearchController {
 
         try {
             SearchResult result = client.execute(search);
+
+            // Sometimes jest returning null here, so just a protection
+            if (result == null) {
+                throw new CouldNotExecuteSearchException();
+            }
+
             return result.getTotal();
         } catch (IOException e) {
             throw new CouldNotExecuteSearchException();
