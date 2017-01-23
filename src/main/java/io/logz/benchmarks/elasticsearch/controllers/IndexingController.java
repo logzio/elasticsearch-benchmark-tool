@@ -63,9 +63,9 @@ public class IndexingController implements BaseController {
 
     private void startIndexing(int threadNumber) {
 
+        logger.debug("Starting indexing thread #{}", threadNumber);
         while (true) {
             try {
-                logger.debug("Starting indexing thread #{}", threadNumber);
 
                 if (Thread.interrupted()) {
                     logger.debug("Got interrupt, stopping indexing thread #{}", threadNumber);

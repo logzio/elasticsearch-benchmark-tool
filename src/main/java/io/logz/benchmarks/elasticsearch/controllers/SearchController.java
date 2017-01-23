@@ -12,8 +12,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
@@ -63,9 +61,9 @@ public class SearchController implements BaseController {
     @SuppressWarnings("WeakerAccess")
     public void startSearching(int threadNumber) {
 
+        logger.debug("Starting searching thread #{}", threadNumber);
         while (true) {
             try {
-                logger.debug("Starting searching thread #{}", threadNumber);
 
                 if (Thread.interrupted())
                     return;
