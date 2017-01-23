@@ -1,8 +1,8 @@
 {
   "size": 0,
   "query": {
-    "filtered": {
-      "query": {
+    "bool": {
+      "must" : {
         "query_string": {
           "query": "*",
           "analyze_wildcard": true

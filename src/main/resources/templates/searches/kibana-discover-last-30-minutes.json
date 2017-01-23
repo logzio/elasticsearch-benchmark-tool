@@ -9,15 +9,12 @@
   "highlight": {
     "pre_tags": ["@kibana-highlighted-field@"],
     "post_tags": ["@/kibana-highlighted-field@"],
-    "fields": {
-      "*": {}
-    },
     "require_field_match": false,
     "fragment_size": 2147483647
   },
   "query": {
-    "filtered": {
-      "query": {
+    "bool": {
+      "must": {
         "query_string": {
           "query": "*",
           "analyze_wildcard": true
@@ -52,7 +49,6 @@
       }
     }
   },
-  "fields": ["*", "_source"],
   "script_fields": {},
   "fielddata_fields": ["@timestamp"]
 }

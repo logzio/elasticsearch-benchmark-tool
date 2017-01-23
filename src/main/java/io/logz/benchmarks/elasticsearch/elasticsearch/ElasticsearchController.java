@@ -146,10 +146,12 @@ public class ElasticsearchController {
         try {
             SearchResult result = client.execute(search);
 
-            logger.debug(result.getErrorMessage());
-            logger.debug(result.getJsonString());
-
-            return result.getTotal();
+            if (result.isSucceeded()) {
+                return result.getTotal();
+            } else {
+                logger.debug(result.getErrorMessage());
+                throw new CouldNotExecuteSearchException();
+            }
         } catch (IOException e) {
             throw new CouldNotExecuteSearchException();
         }

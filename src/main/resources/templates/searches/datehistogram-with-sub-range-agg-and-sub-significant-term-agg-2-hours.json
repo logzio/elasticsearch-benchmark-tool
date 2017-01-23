@@ -1,7 +1,7 @@
 {
   "query": {
-    "filtered": {
-      "query": {
+    "bool": {
+      "must": {
         "query_string": {
           "query": "*",
           "analyze_wildcard": true
@@ -10,12 +10,10 @@
       "filter": {
         "bool": {
           "must": [{
-            "query": {
               "query_string": {
                 "query": "*",
                 "analyze_wildcard": true
               }
-            }
           }, {
             "range": {
               "@timestamp": {
@@ -61,7 +59,7 @@
           "aggs": {
             "4": {
               "significant_terms": {
-                "field": "metricName",
+                "field": "@timestamp",
                 "size": 5
               }
             }

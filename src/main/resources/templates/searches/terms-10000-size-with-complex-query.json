@@ -1,20 +1,20 @@
 {
   "query": {
-    "filtered": {
-      "query": {
+    "bool": {
+      "must": {
         "query_string": {
           "query": "clientId: [100 TO 10000] AND clientAge: [100 TO 150] "
         }
       },
       "filter": {}
     }
-  }
-, "aggs": {
-  "names": {
-    "terms": {
-      "field": "clientName",
-      "size": 10000
+  },
+  "aggs": {
+    "names": {
+      "terms": {
+        "field": "@timestamp",
+        "size": 10000
+      }
     }
   }
-}
 }
