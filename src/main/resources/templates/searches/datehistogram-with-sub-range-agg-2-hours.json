@@ -55,14 +55,6 @@
               "to": 1000
             }],
             "keyed": true
-          },
-          "aggs": {
-            "4": {
-              "significant_terms": {
-                "field": "@timestamp",
-                "size": 5
-              }
-            }
           }
         }
       }

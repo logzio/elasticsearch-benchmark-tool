@@ -48,6 +48,7 @@ public class ElasticsearchController {
     private static final int FIELD_CARDINALITY = 100;
     private static final int MAX_CHARS_IN_FIELD = 10;
     private static final int MIN_CHARS_IN_FIELD = 5;
+    private static final int JEST_READ_TIMEOUT = 2 * 60 * 1000;
     private static final String TEMPLATE_DOCUMENTS_RESOURCE_PATTERN = ".*templates/documents.*";
     private static final String TEMPLATE_SEARCHES_RESOURCE_PATTERN = ".*templates/searches.*";
     private static final String TIMESTAMP_PLACEHOLDER = "TIMESTAMP";
@@ -221,6 +222,7 @@ public class ElasticsearchController {
         factory.setHttpClientConfig(new HttpClientConfig
                 .Builder(esConfig.getElasticsearchProtocol() + "://" + esConfig.getElasticsearchAddress() + ":" + esConfig.getElasticsearchPort())
                 .multiThreaded(true)
+                .readTimeout(JEST_READ_TIMEOUT)
                 .build());
 
         logger.info("Creating Jest client to handle all ES operations");
