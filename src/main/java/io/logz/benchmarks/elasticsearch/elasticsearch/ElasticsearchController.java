@@ -110,7 +110,7 @@ public class ElasticsearchController {
             }
 
         } catch (IOException e) {
-            throw new RuntimeException("Could not delete index from ES!");
+            throw new RuntimeException("Could not delete index from ES!", e);
         }
     }
 
@@ -137,7 +137,7 @@ public class ElasticsearchController {
             return result.getFailedItems().size();
 
         } catch (IOException e) {
-            throw new CouldNotCompleteBulkOperationException();
+            throw new CouldNotCompleteBulkOperationException(e);
         }
     }
 
@@ -154,7 +154,7 @@ public class ElasticsearchController {
                 throw new CouldNotExecuteSearchException();
             }
         } catch (IOException e) {
-            throw new CouldNotExecuteSearchException();
+            throw new CouldNotExecuteSearchException(e);
         }
     }
 
