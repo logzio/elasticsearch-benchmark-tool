@@ -1,0 +1,5 @@
+{
+  "@timestamp": TIMESTAMP,
+  "metricName": "RANDSTR",
+  "value": RANDINT
+}

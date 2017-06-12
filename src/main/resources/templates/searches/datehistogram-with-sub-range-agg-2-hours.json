@@ -1,0 +1,63 @@
+{
+  "query": {
+    "bool": {
+      "must": {
+        "query_string": {
+          "query": "*",
+          "analyze_wildcard": true
+        }
+      },
+      "filter": {
+        "bool": {
+          "must": [{
+              "query_string": {
+                "query": "*",
+                "analyze_wildcard": true
+              }
+          }, {
+            "range": {
+              "@timestamp": {
+                "gte": "now-2h",
+                "lte": "now",
+                "format": "epoch_millis"
+              }
+            }
+          }],
+          "must_not": []
+        }
+      }
+    }
+  },
+  "size": 0,
+  "aggs": {
+    "2": {
+      "date_histogram": {
+        "field": "@timestamp",
+        "interval": "1m",
+        "min_doc_count": 1,
+        "extended_bounds": {
+          "min": "now-2h",
+          "max": "now"
+        }
+      },
+      "aggs": {
+        "3": {
+          "range": {
+            "field": "value",
+            "ranges": [{
+              "from": 10,
+              "to": 100
+            }, {
+              "from": 100,
+              "to": 500
+            }, {
+              "from": 500,
+              "to": 1000
+            }],
+            "keyed": true
+          }
+        }
+      }
+    }
+  }
+}

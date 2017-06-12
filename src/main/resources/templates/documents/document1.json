@@ -1,0 +1,8 @@
+{
+  "@timestamp": TIMESTAMP,
+  "message": "RANDSTR",
+  "itemA": "RANDSTR",
+  "itemB": "RANDSTR",
+  "clientId": RANDINT,
+  "productId": RANDINT
+}

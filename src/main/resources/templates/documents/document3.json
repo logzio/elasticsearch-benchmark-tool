@@ -1,0 +1,7 @@
+{
+  "@timestamp": TIMESTAMP,
+  "clientPassword": "RANDSTR",
+  "clientName": "RANDSTR",
+  "clientAge": RANDINT,
+  "clientId": RANDINT
+}
