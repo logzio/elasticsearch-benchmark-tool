@@ -1,5 +1,5 @@
 # elasticsearch-benchmark-tool
-Complex stress test tool that benchmark indexing and searching in Elasticsearch
+Stress test tool that benchmark indexing and searching in Elasticsearch
 
 ## How it is working
 The tool is getting a configuration file, which represent the test plan.  
