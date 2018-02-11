@@ -12,6 +12,8 @@ public class ElasticsearchConfiguration implements BaseConfiguration {
     private int elasticsearchPort = 9200;
     private int numberOfShards = 1;
     private int numberOfReplicas = 0;
+    private String userName;
+    private String password;
 
     // For Jackson
     @SuppressWarnings("unused")
@@ -20,12 +22,14 @@ public class ElasticsearchConfiguration implements BaseConfiguration {
     }
 
     @SuppressWarnings("unused")
-    public ElasticsearchConfiguration(String elasticsearchAddress, String elasticsearchProtocol, Integer elasticsearchPort, Integer numberOfShards, Integer numberOfReplicas) {
+    public ElasticsearchConfiguration(String elasticsearchAddress, String elasticsearchProtocol, Integer elasticsearchPort, Integer numberOfShards, Integer numberOfReplicas, String userName, String password) {
         this.elasticsearchAddress = elasticsearchAddress;
         this.elasticsearchProtocol = elasticsearchProtocol;
         this.elasticsearchPort = elasticsearchPort;
         this.numberOfShards = numberOfShards;
         this.numberOfReplicas = numberOfReplicas;
+        this.userName = userName;
+        this.password = password;
     }
 
     public String getElasticsearchAddress() {
@@ -46,6 +50,14 @@ public class ElasticsearchConfiguration implements BaseConfiguration {
 
     public int getNumberOfReplicas() {
         return numberOfReplicas;
+    }
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public String getPassword() {
+        return password;
     }
 
     @Override
