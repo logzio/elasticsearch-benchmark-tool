@@ -18,7 +18,10 @@ import io.searchbox.indices.DeleteIndex;
 import io.searchbox.indices.ForceMerge;
 import io.searchbox.indices.Optimize;
 import io.searchbox.indices.mapping.PutMapping;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.http.client.CredentialsProvider;
 import org.elasticsearch.common.settings.Settings;
+import org.jboss.netty.util.internal.StringUtil;
 import org.reflections.Reflections;
 import org.reflections.scanners.ResourcesScanner;
 import org.reflections.util.ClasspathHelper;
@@ -219,11 +222,16 @@ public class ElasticsearchController {
 
     private JestClient initializeJestClient(ElasticsearchConfiguration esConfig) {
         JestClientFactory factory = new JestClientFactory();
-        factory.setHttpClientConfig(new HttpClientConfig
+        HttpClientConfig.Builder httpClientBuilder = new HttpClientConfig
                 .Builder(esConfig.getElasticsearchProtocol() + "://" + esConfig.getElasticsearchAddress() + ":" + esConfig.getElasticsearchPort())
                 .multiThreaded(true)
-                .readTimeout(JEST_READ_TIMEOUT)
-                .build());
+                .readTimeout(JEST_READ_TIMEOUT);
+        
+        if (StringUtils.isNotEmpty(esConfig.getUserName()) && StringUtils.isNotEmpty(esConfig.getPassword())) {
+            httpClientBuilder.defaultCredentials(esConfig.getUserName(), esConfig.getPassword());
+        }
+
+        factory.setHttpClientConfig(httpClientBuilder.build());
 
         logger.info("Creating Jest client to handle all ES operations");
         return factory.getObject();
