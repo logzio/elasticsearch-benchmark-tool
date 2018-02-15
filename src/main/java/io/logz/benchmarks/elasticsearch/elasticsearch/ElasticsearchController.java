@@ -16,12 +16,9 @@ import io.searchbox.core.SearchResult;
 import io.searchbox.indices.CreateIndex;
 import io.searchbox.indices.DeleteIndex;
 import io.searchbox.indices.ForceMerge;
-import io.searchbox.indices.Optimize;
 import io.searchbox.indices.mapping.PutMapping;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.client.CredentialsProvider;
 import org.elasticsearch.common.settings.Settings;
-import org.jboss.netty.util.internal.StringUtil;
 import org.reflections.Reflections;
 import org.reflections.scanners.ResourcesScanner;
 import org.reflections.util.ClasspathHelper;
@@ -34,6 +31,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
@@ -65,6 +63,7 @@ public class ElasticsearchController {
     private final ArrayList<String> searchesList;
     private final JestClient client;
     private final String indexName;
+    private final Optional<String> indexPrefix;
     private final AtomicInteger lastSelectedDocument;
     private final AtomicInteger lastSelectedSearch;
 
@@ -75,7 +74,9 @@ public class ElasticsearchController {
         lastSelectedDocument = new AtomicInteger(0);
         lastSelectedSearch = new AtomicInteger(0);
 
-        indexName = getRandomString(INDEX_LENGTH);
+        indexPrefix = Optional.ofNullable(esConfig.getIndexPrefix());
+
+        indexName = indexPrefix.orElse("") + getRandomString(INDEX_LENGTH);
 
         logger.info("Random test index name set to: {}", indexName);
 
@@ -130,6 +131,10 @@ public class ElasticsearchController {
 
     public String getIndexName() {
         return indexName;
+    }
+
+    public Optional<String> getIndexPrefix() {
+        return indexPrefix;
     }
 
     // Return the number of failed documents
