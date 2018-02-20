@@ -20,6 +20,7 @@ Can be found under ConfigurationExample.conf
                      -e GRAPHITE_PREFIX="Prefix.under.graphite.root" \
                      -e SERVICE_HOST="BENCHMARK_TEST_NAME" \
                      -v /your/configuration.conf:/config.conf \
+                     -v /your/templates:/templates \
                      logzio/elasticsearch-benchmark-tool
 ```
 
