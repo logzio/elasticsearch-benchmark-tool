@@ -74,7 +74,7 @@ public class SearchController implements BaseController {
                     String currSearch = esController.getSearch();
 
                     Search search = new Search.Builder(currSearch)
-                            .addIndex(esController.getIndexName())
+                            .addIndex(esController.getSearchIndex())
                             .addType(esController.getDefaultType())
                             .build();
 
