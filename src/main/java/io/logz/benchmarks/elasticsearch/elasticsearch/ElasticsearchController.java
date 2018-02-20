@@ -137,6 +137,10 @@ public class ElasticsearchController {
         return indexPrefix;
     }
 
+    public String getSearchIndex() {
+        return getIndexPrefix().isPresent() ? getIndexPrefix().get() + "*" : getIndexName();
+    }
+
     // Return the number of failed documents
     public int executeBulk(Bulk bulk) throws CouldNotCompleteBulkOperationException {
         try {
@@ -231,7 +235,7 @@ public class ElasticsearchController {
                 .Builder(esConfig.getElasticsearchProtocol() + "://" + esConfig.getElasticsearchAddress() + ":" + esConfig.getElasticsearchPort())
                 .multiThreaded(true)
                 .readTimeout(JEST_READ_TIMEOUT);
-        
+
         if (StringUtils.isNotEmpty(esConfig.getUserName()) && StringUtils.isNotEmpty(esConfig.getPassword())) {
             httpClientBuilder.defaultCredentials(esConfig.getUserName(), esConfig.getPassword());
         }
