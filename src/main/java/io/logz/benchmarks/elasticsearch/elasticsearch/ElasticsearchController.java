@@ -92,7 +92,7 @@ public class ElasticsearchController {
     private ArrayList<String> loadDocuments(String path, String resource) {
         if (path != null) {
             try {
-                return getDirectoryContent(path);
+                return getExternalDirectoryContent(path);
             } catch (RuntimeException e) {
                 logger.error("failed to load documents from path " + path + ". Fallback, going to load default documents");
             }
@@ -292,7 +292,7 @@ public class ElasticsearchController {
         return tempFilesContentList;
     }
 
-    private ArrayList<String> getDirectoryContent(String path) {
+    private ArrayList<String> getExternalDirectoryContent(String path) {
         ArrayList<String> tempFilesContentList = new ArrayList<>();
 
         File directory = new File(path);
