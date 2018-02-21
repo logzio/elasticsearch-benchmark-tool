@@ -15,6 +15,8 @@ public class ElasticsearchConfiguration implements BaseConfiguration {
     private String userName;
     private String password;
     private String indexPrefix;
+    private String documentsPath;
+    private String searchesPath;
 
     // For Jackson
     @SuppressWarnings("unused")
@@ -64,6 +66,14 @@ public class ElasticsearchConfiguration implements BaseConfiguration {
 
     public String getIndexPrefix() {
         return indexPrefix;
+    }
+
+    public String getDocumentsPath() {
+        return documentsPath;
+    }
+
+    public String getSearchesPath() {
+        return searchesPath;
     }
 
     @Override

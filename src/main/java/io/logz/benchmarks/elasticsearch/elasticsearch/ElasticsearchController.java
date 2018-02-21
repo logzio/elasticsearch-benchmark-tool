@@ -1,5 +1,6 @@
 package io.logz.benchmarks.elasticsearch.elasticsearch;
 
+import com.google.common.io.Files;
 import com.google.common.io.Resources;
 import io.logz.benchmarks.elasticsearch.configuration.ElasticsearchConfiguration;
 import io.logz.benchmarks.elasticsearch.exceptions.CouldNotCompleteBulkOperationException;
@@ -27,9 +28,11 @@ import org.reflections.util.FilterBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Optional;
 import java.util.Set;
@@ -82,8 +85,20 @@ public class ElasticsearchController {
 
         client = initializeJestClient(esConfig);
         randomFieldsList = generateRandomFieldList();
-        rawDocumentsList = getResourceDirectoryContent(TEMPLATE_DOCUMENTS_RESOURCE_PATTERN);
-        searchesList = getResourceDirectoryContent(TEMPLATE_SEARCHES_RESOURCE_PATTERN);
+        rawDocumentsList = loadDocuments(esConfig.getDocumentsPath(), TEMPLATE_DOCUMENTS_RESOURCE_PATTERN);
+        searchesList = loadDocuments(esConfig.getSearchesPath(), TEMPLATE_SEARCHES_RESOURCE_PATTERN);
+    }
+
+    private ArrayList<String> loadDocuments(String path, String resource) {
+        if (path != null) {
+            try {
+                return getExternalDirectoryContent(path);
+            } catch (RuntimeException e) {
+                logger.error("failed to load documents from path " + path + ". Fallback, going to load default documents");
+            }
+        }
+
+        return getResourceDirectoryContent(resource);
     }
 
     public void createIndex() {
@@ -277,6 +292,35 @@ public class ElasticsearchController {
 
         if (tempFilesContentList.isEmpty())
             throw new RuntimeException("Did not find any files under "+ resourcePattern +"!");
+
+        return tempFilesContentList;
+    }
+
+    private ArrayList<String> getExternalDirectoryContent(String path) {
+        ArrayList<String> tempFilesContentList = new ArrayList<>();
+
+        File directory = new File(path);
+        if (!directory.isDirectory()) {
+            throw new RuntimeException(path +" is not a directory!");
+        }
+
+        File[] documents = directory.listFiles();
+
+        if (documents == null || documents.length == 0) {
+            throw new RuntimeException("Did not find any files under "+ path +"!");
+        }
+
+        for (File doc : documents) {
+            try {
+                tempFilesContentList.add(String.join("", Files.readLines(doc, StandardCharsets.UTF_8)));
+            } catch (IOException e) {
+                logger.info("Could not read file {}", doc.getAbsolutePath());
+            }
+        }
+
+        if (tempFilesContentList.isEmpty()) {
+            throw new RuntimeException("Failed to load all files under " + path);
+        }
 
         return tempFilesContentList;
     }
