@@ -297,7 +297,7 @@ public class ElasticsearchController {
 
         File directory = new File(path);
         if (!directory.isDirectory()) {
-            throw new RuntimeException("Did not find any files under "+ path +"!");
+            throw new RuntimeException(path +" is not a directory!");
         }
 
         File[] documents = directory.listFiles();
@@ -313,6 +313,11 @@ public class ElasticsearchController {
                 logger.info("Could not read file {}", doc.getAbsolutePath());
             }
         }
+
+        if (tempFilesContentList.isEmpty()) {
+            throw new RuntimeException("Failed to load all files under " + path);
+        }
+
         return tempFilesContentList;
     }
 }
