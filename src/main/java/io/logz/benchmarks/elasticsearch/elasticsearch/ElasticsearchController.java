@@ -308,9 +308,7 @@ public class ElasticsearchController {
 
         for (File doc : documents) {
             try {
-                String join = String.join("", Files.readLines(doc, StandardCharsets.UTF_8));
-                logger.info(join);
-                tempFilesContentList.add(join);
+                tempFilesContentList.add(String.join("", Files.readLines(doc, StandardCharsets.UTF_8)));
             } catch (IOException e) {
                 logger.info("Could not read file {}", doc.getAbsolutePath());
             }
