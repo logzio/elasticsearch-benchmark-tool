@@ -1,5 +1,8 @@
+# THIS PROJECT IS NO LONGER MAINTAINED
+
 # elasticsearch-benchmark-tool
 Stress test tool that benchmark indexing and searching in Elasticsearch
+
 
 ## How it is working
 The tool is getting a configuration file, which represent the test plan.  
